@@ -42,7 +42,7 @@ LogicalNOT PROTO,
 
 .data
 ZERO REAL4 0.0
-TEN REAL4 10.0
+TENTHOUSANDS REAL4 10000.0
 userSelect BYTE ?
 titleMsg BYTE "===========================================================", 0AH,
 				9H, "WONG YAN ZHI'S CALCULATOR MODULE (RST1S3G1)", 0AH,
@@ -194,49 +194,69 @@ floatCalc PROC
 
 	SUM:
 		INVOKE Addition, floatOne, floatTwo
-		mWrite "Result of 'ADDITION' Calculation (1.d.p): "
+		mWrite "Result of 'ADDITION' Calculation (3.d.p): "
 		JMP printFloatResult
 
 	MINUS:
-		FLD floatTwo
-		FCOM floatOne
-		FNSTSW AX
-		SAHF
-		JA invalidTermTwo
-		FSTP st(0)
 		INVOKE Subtraction, floatOne, floatTwo
-		mWrite "Result of 'SUBTRACTION' Calculation (1.d.p): "
+		mWrite "Result of 'SUBTRACTION' Calculation (3.d.p): "
 		JMP printFloatResult
 
 	MULTIPLY:
 		INVOKE Multiplication, floatOne, floatTwo
-		mWrite "Result of 'MULTIPLICATION' Calculation (1.d.p): "
+		mWrite "Result of 'MULTIPLICATION' Calculation (3.d.p): "
 		JMP printFloatResult
 
 	DIVIDE:
 		INVOKE Division, floatOne, floatTwo
-		mWrite "Result of 'DIVISION' Calculation (1.d.p): "
+		mWrite "Result of 'DIVISION' Calculation (3.d.p): "
 		JMP printFloatResult
 
 	printFloatResult:
-		FMUL TEN
+		FMUL TENTHOUSANDS
 		FISTP floatResult
 		XOR EDX, EDX				; CLEAN the EDX registry (make sure it is 0)
 		MOV EAX, floatResult
 		CDQ
-		MOV EBX, 10
-		CDQ
+		MOV EBX, 10000
 		IDIV EBX	
 		
-		CALL WriteDec
+		CALL WriteInt
 		MOV EAX, EDX
+		NEG EAX
+		CMP EAX, 10
+		JL threeZero
+		CMP EAX, 100
+		JL twoZero
+		CMP EAX, 1000
+		JL oneZero
 		mWrite "."
 		CALL WriteDec
 		CALL Crlf
-		MOV EDX, OFFSET endTitleMsg
-		CALL WriteString
+		JMP askContinue
 
-		CALL continueProgram
+		oneZero:
+			mWrite ".0"
+			CALL WriteDec
+			CALL Crlf
+			JMP askContinue
+
+		twoZero:
+			mWrite ".00"
+			CALL WriteDec
+			CALL Crlf
+			JMP askContinue
+
+		threeZero:
+			mWrite ".000"
+			CALL WriteDec
+			CALL Crlf
+
+		askContinue:
+			MOV EDX, OFFSET endTitleMsg
+			CALL WriteString
+
+			CALL continueProgram
 
 	RET
 floatCalc ENDP
