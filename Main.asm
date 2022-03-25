@@ -195,45 +195,56 @@ floatCalc PROC
 	SUM:
 		INVOKE Addition, floatOne, floatTwo
 		mWrite "Result of 'ADDITION' Calculation (3.d.p): "
-		JMP printFloatResult
+		JMP checkSign
 
 	MINUS:
 		INVOKE Subtraction, floatOne, floatTwo
 		mWrite "Result of 'SUBTRACTION' Calculation (3.d.p): "
-		JMP printFloatResult
+		JMP checkSign
 
 	MULTIPLY:
 		INVOKE Multiplication, floatOne, floatTwo
 		mWrite "Result of 'MULTIPLICATION' Calculation (3.d.p): "
-		JMP printFloatResult
+		JMP checkSign
 
 	DIVIDE:
 		INVOKE Division, floatOne, floatTwo
 		mWrite "Result of 'DIVISION' Calculation (3.d.p): "
-		JMP printFloatResult
+
+	checkSign:
+		FCOM ZERO
+		FNSTSW AX
+		SAHF
+		JA printFloatResult
+		mWrite "-"
 
 	printFloatResult:
-		FMUL TENTHOUSANDS
-		FISTP floatResult
-		XOR EDX, EDX				; CLEAN the EDX registry (make sure it is 0)
-		MOV EAX, floatResult
-		CDQ
-		MOV EBX, 10000
-		IDIV EBX	
-		
-		CALL WriteInt
-		MOV EAX, EDX
-		NEG EAX
-		CMP EAX, 10
-		JL threeZero
-		CMP EAX, 100
-		JL twoZero
-		CMP EAX, 1000
-		JL oneZero
-		mWrite "."
-		CALL WriteDec
-		CALL Crlf
-		JMP askContinue
+		partOne:
+			FMUL TENTHOUSANDS
+			FISTP floatResult
+			XOR EDX, EDX				; CLEAN the EDX registry (make sure it is 0)
+			MOV EAX, floatResult
+			CDQ
+			MOV EBX, 10000
+			IDIV EBX
+			CMP EAX, 0
+			JG partTwo
+			NEG EAX
+
+		partTwo:
+			CALL WriteDec
+			MOV EAX, EDX
+			NEG EAX
+			CMP EAX, 10
+			JL threeZero
+			CMP EAX, 100
+			JL twoZero
+			CMP EAX, 1000
+			JL oneZero
+			mWrite "."
+			CALL WriteDec
+			CALL Crlf
+			JMP askContinue
 
 		oneZero:
 			mWrite ".0"
