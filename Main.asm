@@ -76,7 +76,7 @@ selectionListMsg BYTE "1. Addition", 9H, 9H, "(DEC)", 0AH,
 					  "8. Logical NOT", 9H, 9H, "(BIN)", 0AH, 
 					  "9. Exit", 0AH, 0
 invalidInputSelection BYTE "Invalid input. Please enter only POSITIVE INTEGER between 1 to 9!!", 0AH, 0AH, 0
-invalidFloatInput BYTE "Invalid input. Please enter only FLOATING NUMBER!!", 0AH, 0AH, 0
+invalidFloatInput BYTE "Invalid input. Please enter only FLOATING NUMBER (ZERO is not allowed)!!", 0AH, 0AH, 0
 invalidNumInput BYTE "Invalid input. Please enter only POSITIVE INTEGER between 0 to 255!!", 0AH, 0AH, 0
 invalidCharInput BYTE "Invalid input. Please enter only 'Y' or 'N'!!", 0AH, 0AH, 0
 
