@@ -203,25 +203,25 @@ floatCalc PROC
 	SUM:
 		; Pass 'floatOne' & 'floatTwo' as parameters into 'Addition' Procedure
 		INVOKE Addition, floatOne, floatTwo
-		mWrite "Result of 'ADDITION' Calculation (3.d.p): "
+		mWrite "Result of 'ADDITION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
 
 	MINUS:
 		; Pass 'floatOne' & 'floatTwo' as parameters into 'Subtraction' Procedure
 		INVOKE Subtraction, floatOne, floatTwo
-		mWrite "Result of 'SUBTRACTION' Calculation (3.d.p): "
+		mWrite "Result of 'SUBTRACTION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
 
 	MULTIPLY:
 		; Pass 'floatOne' & 'floatTwo' as parameters into 'Multiplication' Procedure
 		INVOKE Multiplication, floatOne, floatTwo
-		mWrite "Result of 'MULTIPLICATION' Calculation (3.d.p): "
+		mWrite "Result of 'MULTIPLICATION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
 
 	DIVIDE:
 		; Pass 'floatOne' & 'floatTwo' as parameters into 'Division' Procedure
 		INVOKE Division, floatOne, floatTwo
-		mWrite "Result of 'DIVISION' Calculation (3.d.p): "
+		mWrite "Result of 'DIVISION' Calculation (4.d.p): "
 
 	checkSign:
 		FCOM ZERO			; Compare the value (result) calculated [stored in FPU stack - ST(0)] with 0.0
@@ -230,6 +230,11 @@ floatCalc PROC
 		JA printFloatResult	; Jump to 'printFloatResult' label if the value is larger than 0.0
 		mWrite "-"			; Print '-' if the value is found negative
 
+	COMMENT #
+	- The purpose of printFloatResult is to print the result output in more understandable way
+	- It is easier for people to look at the number with 4 decimal places
+	- For example, it is easier to understand by just looking at '0.2476' rather than '+2.4760000E-001'
+	#
 	printFloatResult:
 		partOne:
 			FMUL TENTHOUSANDS		; Multiply TENTHOUSANDS
@@ -383,7 +388,7 @@ binaryCalc PROC
 		CALL WriteString		
 		CALL continueProgram		; CALL 'continueProgram' Procedure
 
-	RET					; Return to the Procedure where it is called
+	RET		; Return to the Procedure where it is called
 binaryCalc ENDP
 
 continueProgram PROC
