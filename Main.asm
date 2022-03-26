@@ -433,8 +433,8 @@ Addition PROC,
 
 	FLD term1	; Load the floating number stored in 'term1' into FPU Stack
 	FLD term2	; Load the floating number stored in 'term2' into FPU Stack
-	FADDP		; Add 'term1' and 'term2' and remove (pop) it out from FPU Stack
-
+	FADDP		; Add 'term1' and 'term2' and pop (remove) it out from FPU Stack [Formula: term1 + term2],
+				; leaving the computed value in ST(0)
 	RET		; Return to the Procedure where it is called
 Addition ENDP
 
@@ -444,8 +444,8 @@ Subtraction PROC,
 
 	FLD term3	; Load the floating number stored in 'term3' into FPU Stack
 	FLD term4	; Load the floating number stored in 'term4' into FPU Stack
-	FSUBP		; Subtract 'term3' and 'term4' and remove (pop) it out from FPU Stack
-
+	FSUBP		; Subtract 'term3' and 'term4' and pop (remove) it out from FPU Stack [Formula: term3 - term4],
+				; leaving the computed value in ST(0)
 	RET		; Return to the Procedure where it is called
 Subtraction ENDP
 
@@ -455,8 +455,8 @@ Multiplication PROC,
 
 	FLD term5	; Load the floating number stored in 'term5' into FPU Stack
 	FLD term6	; Load the floating number stored in 'term6' into FPU Stack
-	FMULP		; Multiply 'term5' and 'term6' and remove (pop) it out from FPU Stack
-
+	FMULP		; Multiply 'term5' and 'term6' and pop (remove) it out from FPU Stack [Formula: term5 * term6],
+				; leaving the computed value in ST(0)
 	RET		; Return to the Procedure where it is called
 Multiplication ENDP
 
@@ -466,8 +466,8 @@ Division PROC,
 
 	FLD term7	; Load the floating number stored in 'term7' into FPU Stack
 	fld term8	; Load the floating number stored in 'term8' into FPU Stack
-	FDIVP		; Divide 'term7' and 'term8' and remove (pop) it out from FPU Stack
-
+	FDIVP		; Divide 'term7' and 'term8' and pop (remove) it out from FPU Stack [Formula: term7 / term8],
+				; leaving the computed value in ST(0)
 	RET		; Return to the Procedure where it is called
 Division ENDP
 
@@ -476,7 +476,7 @@ LogicalAND PROC,
 	term10:BYTE
 
 	MOV AL, term9	; COPIES the value of 'term9' into AL register
-	AND AL, term10	
+	AND AL, term10	; Compute: term9 & term10, value stored in AL register
 
 	RET		; Return to the Procedure where it is called
 LogicalAND ENDP
@@ -486,7 +486,7 @@ LogicalOR PROC,
 	term12:BYTE
 
 	MOV AL, term11	; COPIES the value of 'term11' into AL register
-	OR AL, term12
+	OR AL, term12	; Compute: term11 | term12, value stored in AL register
 
 	RET		; Return to the Procedure where it is called
 LogicalOR ENDP
@@ -496,7 +496,7 @@ LogicalXOR PROC,
 	term14:BYTE
 
 	MOV AL, term13	; COPIES the value of 'term13' into AL register
-	XOR AL, term14
+	XOR AL, term14	; Compute: term13 ^ term14, value stored in AL register
 
 	RET		; Return to the Procedure where it is called
 LogicalXOR ENDP
@@ -506,14 +506,14 @@ LogicalNOT PROC,
 	term16:BYTE
 
 	MOV AL, term15	; COPIES the value of 'term15' into AL register
-	NOT AL
+	NOT AL			; Compute: ~term15, value stored in AL register
 	mWrite "Result of Logical 'NOT' CALCULATION - 1st Term: "
 	MOV EBX, TYPE BYTE	; COPIES the size of BYTE (data structure) into EBX register
 	CALL WriteBinB		; Print the value in EAX register as BINARY Number [0 & 1] (using Irvine32 library)
 	CALL Crlf			; Print a new line '\n' (using Irvine32 library)
 
 	MOV AL, term16	; COPIES the value of 'term16' into AL register
-	NOT AL
+	NOT AL			; Compute: ~term16, value stored in AL register
 
 	RET		; Return to the Procedure where it is called
 LogicalNOT ENDP
