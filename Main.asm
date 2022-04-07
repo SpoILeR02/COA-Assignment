@@ -230,6 +230,7 @@ floatCalc ENDP
 
 inputDec PROC
 	readNum:
+		mWrite "Please enter a number (Positive Integer): "
 		CALL ReadInt		; Read an integer number from user
 		JO invalidNum		; Jump to 'invalidNum' label if overflow (input is invalid numeric)
 		CMP EAX, 0			; Compare the value stored in EAX register with 0
@@ -240,6 +241,8 @@ inputDec PROC
 	invalidNum:
 		CALL Clrscr		; Clear the console screen
 		MOV EDX, OFFSET invalidNumInput	; Print Invalid Number Input Message
+		CALL WriteString
+		MOV EDX, OFFSET titleMsg	; Print Title
 		CALL WriteString
 		JMP readNum		; Jump back to 'readNum' label (loop) to get new input
 inputDec ENDP
@@ -268,10 +271,8 @@ binaryCalc PROC
 
 	MOV EDX, OFFSET titleMsg	; Print Title
 	CALL WriteString
-	mWrite "Please enter the 1st Term (Positive Integer): "
 	CALL inputDec
 	MOV binaryOne, AL	; COPIES the value of AL register into 'binaryOne'
-	mWrite "Please enter the 2nd Term (Positive Integer): "
 	CALL inputDec
 	MOV binaryTwo, AL	; COPIES the value of AL register into 'binaryTwo'
 	CALL Crlf		; Print a new line '\n'
