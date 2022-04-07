@@ -11,7 +11,7 @@ ExitProcess PROTO, dwExitCode:DWORD
 convertBin PROTO,
 number: BYTE
 
-bitTitle PROTO,
+bigTitle PROTO,
 message: PTR BYTE
 
 .data
