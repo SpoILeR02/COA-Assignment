@@ -8,8 +8,11 @@ INCLUDE Macros.inc
 
 ExitProcess PROTO, dwExitCode:DWORD
 
-convertBin PROTO,			; Declare prototype which receive 1 parameter for later use
+convertBin PROTO,
 number: BYTE
+
+bitTitle PROTO,
+message: PTR BYTE
 
 .data
 ZERO REAL4 0.0				; For FCOMP use (compare with 0)
@@ -50,32 +53,30 @@ main PROC
 	CALL mainMenu			; CALL 'mainMenu' Procedure
 	CALL inputSelection		; CALL 'inputSelection' Procedure
 	CALL selectOperation	; CALL 'selectOperation' Procedure
-
 	INVOKE ExitProcess, 0	; End and Exit the program
 main ENDP
 
-mainMenu PROC
+bigTitle PROC,
+	message: PTR BYTE
 	MOV EDX, OFFSET titleMsg		; Print Title
 	CALL WriteString
-	MOV EDX, OFFSET instructionMsg	; Print Instruction
+	MOV EDX, message				; Print received parameter
 	CALL WriteString
 	MOV EDX, OFFSET endTitleMsg		; Print End Title - (=) Line
 	CALL WriteString
+	RET
+bigTitle ENDP
 
+mainMenu PROC
+	INVOKE bigTitle, OFFSET instructionMsg
 	CALL WaitMsg	; Halt the program until user press any key
 	CALL Clrscr		; Clear the console screen
-
-	RET		; Return to the Procedure where it is called
+	RET				; Return to the Procedure where it is called
 mainMenu ENDP
 
 inputSelection PROC
 	readInteger:
-		MOV EDX, OFFSET titleMsg			; Print Title
-		CALL WriteString
-		MOV EDX, OFFSET selectionListMsg	; Print Instruction
-		CALL WriteString
-		MOV EDX, OFFSET endTitleMsg			; Print End Title - (=) Line
-		CALL WriteString
+		INVOKE bigTitle, OFFSET selectionListMsg
 		mWrite "Please enter your number of choice (1 to 9): "
 		CALL ReadInt	; Read an integer number from user
 		JNO validType	; Jump to 'validType' label if not overflow (input is valid numeric)
@@ -92,7 +93,6 @@ inputSelection PROC
 		CMP AL, 9			; Compare the value entered by the user (stored in AL) with 9
 		JG invalidInteger	; Jump to 'invalidInteger' label if the value is larger than 9
 		MOV userSelect, AL	; Store the value inside AL into 'userSelect' if all condition are passed
-
 	CALL Crlf	; Print a new line '\n
 	RET			; Return to the Procedure where it is called
 inputSelection ENDP
@@ -108,40 +108,40 @@ selectOperation PROC
 	floatOperation:
 		CALL floatCalc	; CALL 'floatCalc' Procedure
 		RET				; Return to the Procedure where it is called
-
 	binaryOperation:
 		CALL binaryCalc	; CALL 'binaryCalc' Procedure
 		RET				; Return to the Procedure where it is called
-
 	endFunction:
 		mWrite "You have chose to EXIT the program."
 		CALL Crlf	; Print a new line '\n'
 		RET			; Return to the Procedure where it is called
 selectOperation ENDP
 
-inputFloat PROC
-	CALL ReadFloat	; Read a floating number from user
+compareZero PROC
 	FCOM ZERO		; Compare the value entered by the user [stored in FPU stack - ST(0)] with 0.0
 	FNSTSW AX		; Store the FPU Status into AX Register
 	SAHF			; Store AH into Flags
-	
+	RET
+compareZero ENDP
+
+inputFloat PROC
+	CALL ReadFloat	; Read a floating number from user
+	CALL compareZero	
 	RET
 inputFloat ENDP
 
 floatCalc PROC
-	LOCAL floatResult: DWORD	; Declare local variables 'floatResult' as DWORD type
+	LOCAL floatResult: DWORD	; Declare local variable
 
 	readFloatNum:
 		MOV EDX, OFFSET titleMsg	; Print Title
 		CALL WriteString
 		mWrite "Please enter the 1st Term (Floating Number): "
 		CALL inputFloat	
-		JE invalidFloat	; Jump to 'invalidFloat' label if the value is equal to 0.0
-			
+		JE invalidFloat	; Jump to 'invalidFloat' label if the value is equal to 0.0	
 		mWrite "Please enter the 2nd Term (Floating Number): "
 		CALL inputFloat
 		JE invalidFloat	; Jump to 'invalidFloat' label if the value is equal to 0.0
-
 		CALL Crlf	; Print a new line '\n'
 
 	floatFunc:
@@ -153,37 +153,29 @@ floatCalc PROC
 		JE MULTIPLY			; Jump to 'MULTIPLY' label if the value is equal to 3
 		CMP userSelect, 4	; Compare the value of 'userSelect' with 4
 		JE DIVIDE			; Jump to 'DIVIDE' label if the value is equal to 4
-
 	invalidFloat:
 		FSTP ST(0)			; @@@@
 		CALL Clrscr			; Clear the console screen
 		MOV EDX, OFFSET invalidFloatInput	; Print Invalid Float Input Message
 		CALL WriteString
 		JMP readFloatNum	; Jump back to 'readFloatNum' label (loop) to get new input
-
 	SUM:
 		FADDP		; Add
 		mWrite "Result of 'ADDITION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
-
 	MINUS:
 		FSUBP		; Subtract
 		mWrite "Result of 'SUBTRACTION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
-
 	MULTIPLY:
 		FMULP		; Multiply
 		mWrite "Result of 'MULTIPLICATION' Calculation (4.d.p): "
 		JMP checkSign	; Jump to 'checkSign' label
-
 	DIVIDE:
 		FDIVP		; Divide
 		mWrite "Result of 'DIVISION' Calculation (4.d.p): "
-
 	checkSign:
-		FCOM ZERO			; Compare the result calculated with 0.0
-		FNSTSW AX			; Store the FPU Status into AX Register
-		SAHF				; Store AH into Flags
+		CALL compareZero
 		JA printFloatResult	; Jump to 'printFloatResult' label if the value is larger than 0.0
 		mWrite "-"			; Print '-' if the value is found negative
 
@@ -204,14 +196,12 @@ floatCalc PROC
 			CMP EAX, 0				; Compare the value stored in EAX register with 0
 			JG partTwo				; Jump to 'partTwo' label if the value is larger than 0
 			NEG EAX					; Multiply the value stored in EAX register with -1 if the value is found negative
-
 		partTwo:
 			CALL WriteDec	; Print the value in EAX register as unsigned integer
 			MOV EAX, EDX	; COPIES the value of EDX register into EAX register
 			CMP EAX, 0		; Compare the value stored in EAX register with 0
 			JG checkZero	; Jump to 'checkZero' label if the value is larger than 0
-			NEG EAX			; Multiply the value stored in EAX register with -1 if the value is found negative
-			
+			NEG EAX			; Multiply the value stored in EAX register with -1 if the value is found negative		
 		checkZero:
 			CMP EAX, 10		; Compare the value stored in EAX register with 10
 			JL threeZero	; Jump to 'threeZero' label if the value is less than 10
@@ -220,32 +210,21 @@ floatCalc PROC
 			CMP EAX, 1000	; Compare the value stored in EAX register with 1000
 			JL oneZero		; Jump to 'oneZero' label if the value is less than 1000
 			mWrite "."		; Print '.' ONLY (without 0), if none of the condition is met
-			CALL WriteDec	; Print the value in EAX register as unsigned integer
-			CALL Crlf		; Print a new line '\n'
 			JMP askContinue	; Jump to 'askContinue' label
-
 		oneZero:
 			mWrite ".0"		; Print '.' with one 0
-			CALL WriteDec	; Print the value in EAX register as unsigned integer
-			CALL Crlf		; Print a new line '\n'
 			JMP askContinue ; Jump to 'askContinue' label
-
 		twoZero:
 			mWrite ".00"	; Print '.' with two 0
-			CALL WriteDec	; Print the value in EAX register as unsigned integer
-			CALL Crlf		; Print a new line '\n'
 			JMP askContinue	; Jump to 'askContinue' label
-
 		threeZero:
-			mWrite ".000"	; Print '.' with three 0
+			mWrite ".000"	; Print '.' with three 0			
+		askContinue:
 			CALL WriteDec	; Print the value in EAX register as unsigned integer
 			CALL Crlf		; Print a new line '\n'
-			
-		askContinue:
 			MOV EDX, OFFSET endTitleMsg	; Print End Title - (=) Line
 			CALL WriteString
 			CALL continueProgram	; CALL 'continueProgram' Procedure
-
 	RET		; Return to the Procedure where it is called
 floatCalc ENDP
 
@@ -258,34 +237,34 @@ inputDec PROC
 		CMP EAX, 255		; Compare the value stored in EAX register with 255
 		JG invalidNum		; Jump to 'invalidNum' label if the value is more than 255
 		RET
-
 	invalidNum:
 		CALL Clrscr		; Clear the console screen
 		MOV EDX, OFFSET invalidNumInput	; Print Invalid Number Input Message
 		CALL WriteString
 		JMP readNum		; Jump back to 'readNum' label (loop) to get new input
-
 inputDec ENDP
 
 convertBin PROC,
-	number: BYTE
+	number: BYTE		; Declare local variable
 	mWrite "Number "
-	MOV AL, number	; COPIES the value of 'binaryTwo' into AL register
+	MOV AL, number		; COPIES the value of 'binaryTwo' into AL register
 	CALL WriteDec		; Print the value in EAX register as unsigned integer 
 	mWrite " converted into BINARY: "
 	MOV EBX, TYPE BYTE	; COPIES the size of BYTE (data structure) into EBX register
 	CALL WriteBinB		; Print the value in EAX register as BINARY Number [0 & 1]
 	CALL Crlf			; Print a new line '\n'
-
 	RET
 convertBin ENDP
 
+resultPrint PROC
+	MOV EBX, TYPE BYTE	; COPIES the size of BYTE (data structure) into EBX register
+	CALL WriteBinB		; Print the value in EAX register as BINARY Number [0 & 1]
+	CALL Crlf			; Print a new line '\n'
+	RET
+resultPrint ENDP
+
 binaryCalc PROC
-	COMMENT #
-	- Declare local variables using 'LOCAL' keyword
-	- The local variables, binaryOne & binaryTwo are declared as BYTE type
-	#
-	LOCAL binaryOne: BYTE, binaryTwo: BYTE
+	LOCAL binaryOne: BYTE, binaryTwo: BYTE	; Declare local variables
 
 	MOV EDX, OFFSET titleMsg	; Print Title
 	CALL WriteString
@@ -296,7 +275,6 @@ binaryCalc PROC
 	CALL inputDec
 	MOV binaryTwo, AL	; COPIES the value of AL register into 'binaryTwo'
 	CALL Crlf		; Print a new line '\n'
-
 	BinaryFunc:
 		INVOKE convertBin, binaryOne
 		INVOKE convertBin, binaryTwo
@@ -308,49 +286,35 @@ binaryCalc PROC
 		CMP userSelect, 7	; Compare the value of 'userSelect' with 7
 		JE BinXOR			; Jump to 'BinXOR' label if the value is equal to 7
 		CMP userSelect, 8	; Compare the value of 'userSelect' with 8
-		JE BinNOT			; Jump to 'BinNOT' label if the value is equal to 8
-	
+		JE BinNOT			; Jump to 'BinNOT' label if the value is equal to 8	
 	BinAND:
-		; Pass 'binaryOne' & 'binaryTwo' as parameters into 'LogicalAND' Procedure
-		MOV AL, binaryOne	; COPIES the value of 'term9' into AL register
-		AND AL, binaryTwo	; Compute: term9 & term10, value stored in AL register
+		MOV AL, binaryOne	; COPIES the value of 'binaryOne' into AL register
+		AND AL, binaryTwo	; Compute: binaryOne&binaryTwo, value stored in AL register
 		mWrite "Result of Logical 'AND' Calculation: "
 		JMP printBinResult	; Jump to 'printBinResult' label
-	
 	BinOR:
-		; Pass 'binaryOne' & 'binaryTwo' as parameters into 'LogicalOR' Procedure
 		MOV AL, binaryOne	; COPIES the value of 'term11' into AL register
-		OR AL, binaryTwo	; Compute: term11 | term12, value stored in AL register
+		OR AL, binaryTwo	; Compute: binaryOne|binaryTwo, value stored in AL register
 		mWrite "Result of Logical 'OR' Calculation: "
-		JMP printBinResult	; Jump to 'printBinResult' label
-	
+		JMP printBinResult	; Jump to 'printBinResult' label	
 	BinXOR:
-		; Pass 'binaryOne' & 'binaryTwo' as parameters into 'LogicalXOR' Procedure
-		MOV AL, binaryOne	; COPIES the value of 'term13' into AL register
-		XOR AL, binaryTwo	; Compute: term13 ^ term14, value stored in AL register
+		MOV AL, binaryOne	; COPIES the value of 'binaryOne' into AL register
+		XOR AL, binaryTwo	; Compute: binaryOne^binaryTwo, value stored in AL register
 		mWrite "Result of Logical 'XOR' Calculation: "
-		JMP printBinResult	; Jump to 'printBinResult' label
-	
+		JMP printBinResult	; Jump to 'printBinResult' label	
 	BinNOT:
-		; Pass 'binaryOne' & 'binaryTwo' as parameters into 'LogicalNOT' Procedure
-		MOV AL, binaryOne	; COPIES the value of 'term15' into AL register
-		NOT AL			; Compute: ~term15, value stored in AL register
+		MOV AL, binaryOne	; COPIES the value of 'binaryOne' into AL register
+		NOT AL			; Compute: ~binaryOne, value stored in AL register
 		mWrite "Result of Logical 'NOT' CALCULATION - 1st Term: "
-		MOV EBX, TYPE BYTE	; COPIES the size of BYTE (data structure) into EBX register
-		CALL WriteBinB		; Print the value in EAX register as BINARY Number [0 & 1]
-		CALL Crlf			; Print a new line '\n'
-		MOV AL, binaryTwo	; COPIES the value of 'term16' into AL register
-		NOT AL			; Compute: ~term16, value stored in AL register
-		mWrite "Result of Logical 'NOT' CALCULATION - 2nd Term: "
-	
+		CALL resultPrint
+		MOV AL, binaryTwo	; COPIES the value of 'binaryTwo' into AL register
+		NOT AL			; Compute: ~binaryTwo, value stored in AL register
+		mWrite "Result of Logical 'NOT' CALCULATION - 2nd Term: "	
 	printBinResult:
-		MOV EBX, TYPE BYTE		; COPIES the size of BYTE (data structure) into EBX register
-		CALL WriteBinB			; Print the value in EAX register as BINARY Number [0 & 1]
-		CALL Crlf				; Print a new line '\n'
+		CALL resultPrint
 		MOV EDX, OFFSET endTitleMsg	; Print End Title - (=) Line
 		CALL WriteString
 		CALL continueProgram	; CALL 'continueProgram' Procedure
-
 	RET		; Return to the Procedure where it is called
 binaryCalc ENDP
 
@@ -373,12 +337,10 @@ continueProgram PROC
 		MOV EDX, OFFSET invalidCharInput	; Print Invalid Character Input Message
 		CALL WriteString
 		JMP readCharacter	; Jump back to 'readCharacter' label (loop) to get new input
-	
 	YES:
 		CALL Clrscr				; Clear the console screen
 		CALL selectOperation	; CALL 'selectOperation' Procedure
 		RET		; Return to the Procedure where it is called
-	
 	NO:
 		CALL Clrscr		; Clear the console screen
 		CALL main		; CALL 'main' Procedure
